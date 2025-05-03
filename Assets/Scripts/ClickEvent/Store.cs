@@ -7,24 +7,45 @@ public class Store : MonoBehaviour
 {
 
     private ClickerScript clickerScript;
+
     public Button storeButton;
     public Button autoClickButton;
     public Button increaseAuto;
+    public Button buddyButton;
+    public Button buddyAmountButton;
+    public Button buddySpeed;
 
-    public int[] storeCost = { 10, 25, 15 };
+    private Vector3 buddySpawnPos;
+
+    public int[] storeCost = { 10, 25, 15, 50, 100, 200 };
     private bool autoOn;
     private float autoSpeed;
+
+    private bool buddyOn;
+    public GameObject buddy;
+    private int buddyAmount;
+    private float buddyMaxSpeed;
+    private float buddyMinSpeed;
     void Start()
     {
         clickerScript = GameObject.Find("Canvas").GetComponent<ClickerScript>();
         autoOn = false;
+        buddyOn = false;
+        buddyMaxSpeed = 60;
+        buddyMinSpeed = 30;
+        buddyAmount = 25;
         autoSpeed = 3;
+
+        
     }
 
     // Update is called once per frame
     void Update()
     {
         ActivateStore();
+
+        buddySpawnPos = new Vector3(Random.Range(50, 1000), Random.Range(50, 400), 0);
+        Debug.Log(buddySpawnPos);
     }
 
     void ActivateStore()
@@ -72,9 +93,55 @@ public class Store : MonoBehaviour
         }
     }
 
+    public void SpawnHelper()
+    {
+        buddyOn = true;
+        buddyButton.gameObject.SetActive(false);
+        buddyAmountButton.gameObject.SetActive(true);
+        buddySpeed.gameObject.SetActive(true);
+        StartCoroutine(BuddyCooldown());
+        clickerScript.clickAmount -= storeCost[1];
+    }
+
+    public void IncreaseHelperSpeed()
+    {
+        if(clickerScript.clickAmount >= storeCost[4] || buddyOn)
+        {
+            buddyMinSpeed *= .5f;
+            buddyMaxSpeed *= .5f;
+            clickerScript.clickAmount -= storeCost[4];
+            storeCost[4] *= 2;
+        }
+    }
+
+    public void IncreaseBuddyAmount()
+    {
+        if (clickerScript.clickAmount >= storeCost[4] || buddyOn)
+        {
+            buddyAmount *= 2;
+            clickerScript.clickAmount -= storeCost[5];
+            storeCost[5] *= 2;
+        }
+    }
+
+    private IEnumerator BuddyCooldown()
+    {
+
+
+        while (buddyOn)
+        {
+            buddy.transform.position = buddySpawnPos;
+            yield return new WaitForSeconds(Random.Range(buddyMinSpeed, buddyMaxSpeed));
+            buddy.gameObject.SetActive(true);
+            clickerScript.clickAmount += buddyAmount;
+            yield return new WaitForSeconds(3);
+           buddy.gameObject.SetActive(false);
+        }
+    }
+
     private IEnumerator SetAutoClick()
     {
-        while (autoOn)
+        while (buddyOn)
         {
             yield return new WaitForSeconds(autoSpeed);
             clickerScript.clickAmount++;
